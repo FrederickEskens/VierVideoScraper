@@ -32,38 +32,59 @@ namespace VierVideoScraper
                         currIndex++;
                         url = url.Replace(segment, $"{currIndex}.ts");
                     }
-                    throw new Exception();
+                }
+                catch (WebException e)
+                {
+                    if (e.Status == WebExceptionStatus.ProtocolError)
+                    {
+                        CreateFile(fileName, tempfolder);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"An error has occured: {e.Message}");
+                    }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Download complete.");
-                    Console.WriteLine("Merging files.");
-
-                    var cmd = new Process
-                    {
-                        StartInfo =
-                        {
-                            FileName = "cmd.exe",
-                            RedirectStandardInput = true,
-                            RedirectStandardOutput = true,
-                            CreateNoWindow = true,
-                            UseShellExecute = false
-                        }
-                    };
-                    cmd.Start();
-
-                    cmd.StandardInput.WriteLine($"copy /b temp\\*.ts {fileName}.mp4");
-                    cmd.StandardInput.Flush();
-                    cmd.StandardInput.Close();
-                    cmd.WaitForExit();
-                    Console.WriteLine(cmd.StandardOutput.ReadToEnd());
-
-                    Console.WriteLine("Removing temporary files.");
-                    Directory.Delete(tempfolder, true);
-                    Console.WriteLine("Scrape completed.");
-                    Console.ReadKey();
+                    Console.WriteLine($"An error has occured: {e.Message}");
                 }
             }
+        }
+
+        private static void CreateFile(string fileName, string tempfolder)
+        {
+            Console.WriteLine("Download complete.");
+            Console.WriteLine("Merging files.");
+
+            var cmd = new Process
+            {
+                StartInfo =
+                {
+                    FileName = "cmd.exe",
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                }
+            };
+            cmd.Start();
+
+            cmd.StandardInput.WriteLine($"copy /b temp\\*.ts {fileName}.mp4");
+            cmd.StandardInput.Flush();
+            cmd.StandardInput.Close();
+            cmd.WaitForExit();
+            Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+
+            RemoveTempFiles(tempfolder);
+
+            Console.WriteLine("Scrape completed.");
+            Console.ReadKey();
+        }
+
+        private static void RemoveTempFiles(string tempfolder)
+        {
+            Console.WriteLine("Removing temporary files.");
+            Directory.Delete(tempfolder, true);
         }
 
         private static string AddPrecedingZeros(string input)
